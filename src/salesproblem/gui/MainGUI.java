@@ -350,24 +350,6 @@ public class MainGUI extends javax.swing.JFrame {
                 errorPrint();
                 return;
             }
-            if (graphSize > 2) {
-                for (int i = 0; i < graph.getGraphSize(); i++) {
-
-                    for (int j = 0; j < graph.getGraphSize(); j++) {
-
-                        if (i == j || graph.checkIfNeighbors(i, j))
-                            continue;
-                        if (graph.getVertexDegree(i) + graph.getVertexDegree(j) < graphSize) {
-
-                            errorPrint();
-                            return;
-
-                        }
-
-                    }
-
-                }
-            }
             if (DepthSearch.depthSearch(graph) != graphSize) {
                 errorPrint();
                 return;
@@ -429,11 +411,11 @@ public class MainGUI extends javax.swing.JFrame {
                         int source = edge.get(0);
                         int target = edge.get(1);
                         if (salesmanPath.get(source) == target || salesmanPath.get(target) == source) {
-                            g2.setColor(Color.BLUE);
+                            g2.setColor(Color.RED);
                         }
                     }
                     g2.drawLine(sourceX, sourceY, targetX, targetY);
-                    g2.setColor(Color.red);
+                    g2.setColor(Color.RED);
                     g2.setFont(new Font("Times new roman", Font.BOLD, 15));
                     g2.drawString(weight.toString(), (sourceX + targetX) / 2 - 10,
                             (sourceY + targetY) / 2 - 10);

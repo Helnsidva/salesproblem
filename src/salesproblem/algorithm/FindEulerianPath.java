@@ -33,30 +33,27 @@ public class FindEulerianPath {
         if (graphSize == 0)
             return null;
 
+        //проверка графа на связность
         if (DepthSearch.depthSearch(graph) != graphSize)
             return null;
 
-        if (graphSize > 2) {
-            for (int i = 0; i < graphSize; i++) {
-
-                for (int j = 0; j < graphSize; j++) {
-
-                    if (i == j || graph.checkIfNeighbors(i, j))
-                        continue;
-
-                    if (graph.getVertexDegree(i) + graph.getVertexDegree(j) < graphSize) {
-
-                        return null;
-
-                    }
-
-                }
-
-            }
+        //проверка на то, чтобы графе был цикл
+        for (int i = 0; i < graphSize; i++) {
+            if (graph.getVertexDegree(i) < 2)
+                return null;
         }
 
+        //двумерный массив для хранения "масок", соответсвующих каждой вершине:
+        //размер маски в двоичном представлении соответстувет количеству вершин
+        //и каждый разряд тому, пройдена ли вершина с соответствующим номером
+        //в рассмотренном пути. маски, соответствующие вершине - пути из этой
+        //вершины, содержающие вершины из маски.
+        //например, viewedWays[0][15] = viewedWays[0][111] - путь из вершины с номером 0,
+        //проходящий через вершины 1 и 2.
         int[][] viewedWays = new int[graphSize][(int)pow(2, graphSize)];
         for(int i = 0; i < graphSize; i++) {
+            //для каждого рассматриваемого маршрута до целовой вершины считается кратчайший
+            //путь, поэтому изначально массив заполняется большими значениями
             Arrays.fill(viewedWays[i], infinity);
         }
 
