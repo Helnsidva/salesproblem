@@ -6,17 +6,22 @@ import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Objects;
 
 import salesproblem.algorithm.*;
-
 import javax.swing.*;
 
 public class MainGUI extends javax.swing.JFrame {
 
-    Graph graph;
-    int graphInputMode = 0;
+    private Graph graph;
+    private int graphInputMode = 0;
+    //1 - adding vertex
+    //2, 3 - adding edge
+    //4 - removing vertex
+    //5, 6 - removing edge
+    //7 - finding way
 
-    public MainGUI() {
+    private MainGUI() {
         initComponents();
         graph = new Graph();
     }
@@ -24,16 +29,16 @@ public class MainGUI extends javax.swing.JFrame {
     private void initComponents() {
 
         graphField = new DrawPanel();
-        addVertexButton = new javax.swing.JButton();
-        addEdgeButton = new javax.swing.JButton();
-        removeVertexButton = new javax.swing.JButton();
-        removeEdgeButton = new javax.swing.JButton();
-        buildTheWayButton = new javax.swing.JButton();
-        caption = new javax.swing.JScrollPane();
-        captionArea = new javax.swing.JTextArea();
-        solutionWindow = new javax.swing.JScrollPane();
+        JButton addVertexButton = new JButton();
+        JButton addEdgeButton = new JButton();
+        JButton removeVertexButton = new JButton();
+        JButton removeEdgeButton = new JButton();
+        JButton buildTheWayButton = new JButton();
+        JScrollPane caption = new JScrollPane();
+        JTextArea captionArea = new JTextArea();
+        JScrollPane solutionWindow = new JScrollPane();
         solutionWindowArea = new javax.swing.JTextArea();
-        adjListWindow = new javax.swing.JScrollPane();
+        JScrollPane adjListWindow = new JScrollPane();
         adjListWindowArea = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -53,41 +58,21 @@ public class MainGUI extends javax.swing.JFrame {
         );
 
         addVertexButton.setText("Add vertex");
-        addVertexButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addVertexButtonActionPerformed(evt);
-            }
-        });
+        addVertexButton.addActionListener(this::addVertexButtonActionPerformed);
 
         addEdgeButton.setText("Add edge");
-        addEdgeButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addEdgeButtonActionPerformed(evt);
-            }
-        });
+        addEdgeButton.addActionListener(this::addEdgeButtonActionPerformed);
 
         removeVertexButton.setText("Remove vertex");
-        removeVertexButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                removeVertexButtonActionPerformed(evt);
-            }
-        });
+        removeVertexButton.addActionListener(this::removeVertexButtonActionPerformed);
 
         removeEdgeButton.setText("Remove edge");
-        removeEdgeButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                removeEdgeButtonActionPerformed(evt);
-            }
-        });
+        removeEdgeButton.addActionListener(this::removeEdgeButtonActionPerformed);
 
         buildTheWayButton.setText("Build the way");
-        buildTheWayButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                buildTheWayButtonActionPerformed(evt);
-            }
-        });
+        buildTheWayButton.addActionListener(this::buildTheWayButtonActionPerformed);
         captionArea.setColumns(20);
-        captionArea.setFont(new java.awt.Font("Times New Roman", 0, 12)); // NOI18N
+        captionArea.setFont(new java.awt.Font("Times New Roman", Font.PLAIN, 12)); // NOI18N
         captionArea.setRows(5);
         captionArea.setText("             Here you can build a graph and find the solution of the salesman problem for it.");
         caption.setViewportView(captionArea);
@@ -182,13 +167,7 @@ public class MainGUI extends javax.swing.JFrame {
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(MainGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(MainGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(MainGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+        } catch (ClassNotFoundException | InstantiationException | UnsupportedLookAndFeelException | IllegalAccessException ex) {
             java.util.logging.Logger.getLogger(MainGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
 
@@ -214,7 +193,115 @@ public class MainGUI extends javax.swing.JFrame {
 
         }
 
-        public DrawPanel() {
+        void addingVertex(MouseEvent e) {
+            vertices.add(new Point(e.getX(), e.getY()));
+            graph.addVertex();
+            renewalAdjList ();
+            graphInputMode = 0;
+        }
+
+        void addingSource(MouseEvent e) {
+            int x = e.getX();
+            int y = e.getY();
+            Integer vertexIndex = getVertexIndex(x, y);
+            if (vertexIndex != null) {
+                ArrayList<Integer> addingEdge = new ArrayList<>();
+                addingEdge.add(vertexIndex);
+                edges.add(addingEdge);
+                graphInputMode = 3;
+            }
+            else {
+                graphInputMode = 0;
+            }
+        }
+
+        void addingTarget(MouseEvent e) {
+            int x = e.getX();
+            int y = e.getY();
+            Integer vertexIndex = getVertexIndex(x, y);
+            if (vertexIndex != null) {
+                edges.get(edges.size() - 1).add(vertexIndex);
+                String inputWeight = JOptionPane.showInputDialog("Enter the weight of the edge");
+                edges.get(edges.size() - 1).add(Integer.parseInt(inputWeight));
+                graph.addNeighbor(edges.get(edges.size() - 1).get(0), vertexIndex, Integer.parseInt(inputWeight));
+                renewalAdjList ();
+            }
+            else
+                edges.remove(edges.size() - 1);
+            graphInputMode = 0;
+        }
+
+        void removingVertex(MouseEvent e) {
+            int x = e.getX();
+            int y = e.getY();
+            Integer vertexIndex = getVertexIndex(x, y);
+            if (vertexIndex != null) {
+                for (int i = 0; i < edges.size(); i++) {
+                    ArrayList<Integer> edge = edges.get(i);
+                    if (Objects.equals(edge.get(0), vertexIndex) ||
+                            Objects.equals(edge.get(1), vertexIndex)) {
+                        edges.remove(i);
+                        i--;
+                        continue;
+                    }
+                    if (edge.get(0) > vertexIndex) {
+                        int oldValue = edge.get(0);
+                        oldValue--;
+                        edge.set(0, oldValue);
+                    }
+                    if (edge.get(1) > vertexIndex) {
+                        int oldValue = edge.get(1);
+                        oldValue--;
+                        edge.set(1, oldValue);
+                    }
+                }
+                vertices.remove((int)vertexIndex);
+                graph.removeVertex(vertexIndex);
+                renewalAdjList ();
+            }
+            else
+                edges.remove(edges.size() - 1);
+            graphInputMode = 0;
+        }
+
+        void removingSource(MouseEvent e) {
+            int x = e.getX();
+            int y = e.getY();
+            Integer vertexIndex = getVertexIndex(x, y);
+            if (vertexIndex != null) {
+                deletingBuffer = vertexIndex;
+                graphInputMode = 6;
+            }
+            else
+                graphInputMode = 0;
+        }
+
+        void removingTarget(MouseEvent e) {
+            int x = e.getX();
+            int y = e.getY();
+            Integer vertexIndex = getVertexIndex(x, y);
+            if (vertexIndex != null) {
+                for (int i = 0; i < edges.size(); i++) {
+                    ArrayList<Integer> edge = edges.get(i);
+                    if ((Objects.equals(edge.get(0), deletingBuffer) && Objects.equals(edge.get(1), vertexIndex)) ||
+                            (Objects.equals(edge.get(0), vertexIndex) && Objects.equals(edge.get(1), deletingBuffer))) {
+                        edges.remove(i);
+                        graph.removeEdge(deletingBuffer, vertexIndex);
+                        break;
+                    }
+                }
+                renewalAdjList ();
+            }
+            graphInputMode = 0;
+        }
+
+        void renewalAdjList () {
+            adjListWindowArea.setText(null);
+            adjListWindowArea.append(graph.getAdjacencyListForPrint());
+            repaint();
+        }
+
+        DrawPanel() {
             vertices = new ArrayList<>();
             edges = new ArrayList<>();
             salesmanPath = new HashMap<>();
@@ -225,110 +312,75 @@ public class MainGUI extends javax.swing.JFrame {
                 @Override
                 public void mousePressed(MouseEvent e) {
                     if (graphInputMode == 1) {
-                        vertices.add(new Point(e.getX(), e.getY()));
-                        graph.addVertex();
-                        adjListWindowArea.setText(null);
-                        adjListWindowArea.append(graph.getAdjacencyListForPrint());
-                        repaint();
-                        graphInputMode = 0;
+                        addingVertex(e);
                     }
                     else if (graphInputMode == 2) {
-                        int x = e.getX();
-                        int y = e.getY();
-                        Integer vertexIndex = getVertexIndex(x, y);
-                        if (vertexIndex != null) {
-                            ArrayList<Integer> addingEdge = new ArrayList<>();
-                            addingEdge.add(vertexIndex);
-                            edges.add(addingEdge);
-                            graphInputMode = 3;
-                        }
-                        else {
-                            graphInputMode = 0;
-                        }
+                        addingSource(e);
                     }
                     else if (graphInputMode == 3) {
-                        int x = e.getX();
-                        int y = e.getY();
-                        Integer vertexIndex = getVertexIndex(x, y);
-                        if (vertexIndex != null) {
-                            edges.get(edges.size() - 1).add(vertexIndex);
-                            String inputWeight = JOptionPane.showInputDialog("Enter the weight of the edge");
-                            edges.get(edges.size() - 1).add(Integer.parseInt(inputWeight));
-                            graph.addNeighbor(edges.get(edges.size() - 1).get(0), vertexIndex, Integer.parseInt(inputWeight));
-                            adjListWindowArea.setText(null);
-                            adjListWindowArea.append(graph.getAdjacencyListForPrint());
-                            repaint();
-                        }
-                        else
-                            edges.remove(edges.size() - 1);
-                        graphInputMode = 0;
+                        addingTarget(e);
                     }
                     else if (graphInputMode == 4) {
-                        int x = e.getX();
-                        int y = e.getY();
-                        Integer vertexIndex = getVertexIndex(x, y);
-                        if (vertexIndex != null) {
-                            for (int i = 0; i < edges.size(); i++) {
-                                ArrayList<Integer> edge = edges.get(i);
-                                if (edge.get(0) == vertexIndex || edge.get(1) == vertexIndex) {
-                                    edges.remove(i);
-                                    i--;
-                                    continue;
-                                }
-                                if (edge.get(0) > vertexIndex) {
-                                    int oldValue = edge.get(0);
-                                    oldValue--;
-                                    edge.set(0, oldValue);
-                                }
-                                if (edge.get(1) > vertexIndex) {
-                                    int oldValue = edge.get(1);
-                                    oldValue--;
-                                    edge.set(1, oldValue);
-                                }
-                            }
-                            vertices.remove((int)vertexIndex);
-                            graph.removeVertex(vertexIndex);
-                            adjListWindowArea.setText(null);
-                            adjListWindowArea.append(graph.getAdjacencyListForPrint());
-                            repaint();
-                        }
-                        else
-                            edges.remove(edges.size() - 1);
-                        graphInputMode = 0;
+                        removingVertex(e);
                     }
                     else if (graphInputMode == 5) {
-                        int x = e.getX();
-                        int y = e.getY();
-                        Integer vertexIndex = getVertexIndex(x, y);
-                        if (vertexIndex != null) {
-                            deletingBuffer = vertexIndex;
-                            graphInputMode = 6;
-                        }
-                        else
-                            graphInputMode = 0;
+                        removingSource(e);
                     }
                     else if (graphInputMode == 6) {
-                        int x = e.getX();
-                        int y = e.getY();
-                        Integer vertexIndex = getVertexIndex(x, y);
-                        if (vertexIndex != null) {
-                            for (int i = 0; i < edges.size(); i++) {
-                                ArrayList<Integer> edge = edges.get(i);
-                                if ((edge.get(0) == deletingBuffer && edge.get(1) == vertexIndex) ||
-                                        (edge.get(0) == vertexIndex && edge.get(1) == deletingBuffer)) {
-                                    edges.remove(i);
-                                    graph.removeEdge(deletingBuffer, vertexIndex);
-                                    break;
-                                }
-                            }
-                            adjListWindowArea.setText(null);
-                            adjListWindowArea.append(graph.getAdjacencyListForPrint());
-                            repaint();
-                        }
-                        graphInputMode = 0;
+                        removingTarget(e);
                     }
                 }
             });
+        }
+
+        void errorPrint() {
+            solutionWindowArea.setText(null);
+            solutionWindowArea.append("These is no solution!\n");
+            graphInputMode = 0;
+            repaint();
+        }
+
+        void checkGraph() {
+            if (graph == null) {
+                errorPrint();
+                return;
+            }
+            int graphSize = graph.getGraphSize();
+            if (graphSize == 0) {
+                errorPrint();
+                return;
+            }
+            if (graphSize > 2) {
+                for (int i = 0; i < graph.getGraphSize(); i++) {
+
+                    for (int j = 0; j < graph.getGraphSize(); j++) {
+
+                        if (i == j || graph.checkIfNeighbors(i, j))
+                            continue;
+                        if (graph.getVertexDegree(i) + graph.getVertexDegree(j) < graphSize) {
+
+                            errorPrint();
+                            return;
+
+                        }
+
+                    }
+
+                }
+            }
+            if (DepthSearch.depthSearch(graph) != graphSize) {
+                errorPrint();
+                return;
+            }
+            if (graph.getGraphSize() < 20)
+                salesmanPath = FindEulerianPath.findCycle(graph);
+            else
+                salesmanPath = AnnealingAlgorithm.findPath(graph);
+            if (salesmanPath == null) {
+                errorPrint();
+                return;
+            }
+
         }
 
         @Override
@@ -340,46 +392,20 @@ public class MainGUI extends javax.swing.JFrame {
 
             g2.setColor(Color.black);
             if (graphInputMode == 7) {
-                if (graph == null) {
-                    solutionWindowArea.setText(null);
-                    solutionWindowArea.append("These is no solution: there is no graph!\n");
+                checkGraph();
+                if (salesmanPath == null) {
+                    errorPrint();
                     return;
                 }
-                int graphSize = graph.getGraphSize();
-                if (graphSize == 0) {
-                    solutionWindowArea.setText(null);
-                    solutionWindowArea.append("These is no solution: there is no graph!\n");
-                    return;
+                solutionWindowArea.setText(null);
+                solutionWindowArea.append("0 - ");
+                int nextVertex = 0;
+                for (int i = 0; i < salesmanPath.size() - 2; i++) {
+                    solutionWindowArea.append(salesmanPath.get(nextVertex).toString() + " - ");
+                    nextVertex = salesmanPath.get(nextVertex);
                 }
-                if (graphSize > 2) {
-                    for (int i = 0; i < graph.getGraphSize(); i++) {
-
-                        for (int j = 0; j < graph.getGraphSize(); j++) {
-
-                            if (i == j || graph.checkIfNeighbors(i, j))
-                                continue;
-                            if (graph.getVertexDegree(i) + graph.getVertexDegree(j) < graphSize) {
-
-                                solutionWindowArea.setText(null);
-                                solutionWindowArea.append("There is no solution for this graph\n");
-                                return;
-
-                            }
-
-                        }
-
-                    }
-                }
-                if (DepthSearch.depthSearch(graph) != graphSize) {
-                    solutionWindowArea.setText(null);
-                    solutionWindowArea.append("There is no solution: the graph is disconnected\n");
-                    return;
-                }
-                if (graph.getGraphSize() < 20)
-                    salesmanPath = FindEulerianPath.findCycle(graph);
-                else
-                    salesmanPath = AnnealingAlgorithm.findPath(graph);
-
+                solutionWindowArea.append("0\n");
+                solutionWindowArea.append("Path length = " + salesmanPath.get(graph.getGraphSize()));
             }
 
             for (Integer i = 0; i < vertices.size(); i++) {
@@ -423,17 +449,8 @@ public class MainGUI extends javax.swing.JFrame {
         }
     }
 
-    private javax.swing.JButton addEdgeButton;
-    private javax.swing.JButton addVertexButton;
-    private javax.swing.JScrollPane adjListWindow;
     private javax.swing.JTextArea adjListWindowArea;
-    private javax.swing.JButton buildTheWayButton;
-    private javax.swing.JScrollPane caption;
-    private javax.swing.JTextArea captionArea;
     private DrawPanel graphField;
-    private javax.swing.JButton removeEdgeButton;
-    private javax.swing.JButton removeVertexButton;
-    private javax.swing.JScrollPane solutionWindow;
     private javax.swing.JTextArea solutionWindowArea;
 
 }

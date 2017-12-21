@@ -58,9 +58,6 @@ public class FindEulerianPath {
         int[][] viewedWays = new int[graphSize][(int)pow(2, graphSize)];
         for(int i = 0; i < graphSize; i++) {
             Arrays.fill(viewedWays[i], infinity);
-//            for(int j = 0; j < (int)pow(2, graphSize); j++) {
-//                viewedWays[i][j] = infinity;
-            // }
         }
 
         viewedWays[0][0] = 0;
@@ -69,9 +66,6 @@ public class FindEulerianPath {
 
         List<Integer> outputList = findWay(viewedWays, graph);
         Map<Integer, Integer> outputMap = new HashMap<>();
-
-        if (outputList.size() != graphSize)
-            return null;
 
         for (int i = 0; i < outputList.size() - 1; i++) {
 
