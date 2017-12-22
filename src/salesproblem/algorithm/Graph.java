@@ -7,8 +7,11 @@ import java.util.Map;
 
 public class Graph {
 
+    //класс для хранения соседей один вершины
     private class VertexList {
 
+        //хранится номер вершины, список соседних вершин
+        //список расстояний до соседей и количество соседей
         int vertexNumber;
         List<Integer> vertexNeighbors = new ArrayList<>();
         List<Integer> neighborsDistance = new ArrayList<>();
@@ -53,6 +56,7 @@ public class Graph {
 
         }
 
+        //изменении нумерации вершин при удалении вершины
         void removingShift(int deletingVertex) {
 
             if (deletingVertex < vertexNumber)
@@ -79,6 +83,7 @@ public class Graph {
 
     }
 
+    //в графе хранится список объектов VertexList для каждой вершины
     private List<VertexList> adjacencyList = new ArrayList<>();
     private int graphSize = 0;
 
@@ -152,6 +157,7 @@ public class Graph {
 
     }
 
+    //для алгоритма имитации отжига
     Integer getNotNullDistance(int firstVertex, int secondVertex) {
 
         int infinity = 10000;
@@ -194,28 +200,27 @@ public class Graph {
 
     public String getAdjacencyListForPrint () {
 
-        String outputAdjacencyListString = new String();
-        outputAdjacencyListString += "Adjacency list:\n";
-        outputAdjacencyListString += "[ vertex number ] [ vertex neighbors ] [ distance ]\n";
+        StringBuilder outputAdjacencyListString = new StringBuilder("Adjacency list:\n");
+        outputAdjacencyListString.append("[ vertex number ] [ vertex neighbors ] [ distance ]\n");
         for (Integer i = 0; i < adjacencyList.size(); i++) {
             VertexList vertex = adjacencyList.get(i);
-            outputAdjacencyListString += "[ " + i.toString() + " ] [ ";
+            outputAdjacencyListString.append("[ ").append(i.toString()).append(" ] [ ");
             if (vertex.vertexNeighbors.isEmpty()) {
-                outputAdjacencyListString += "] [ ]\n";
+                outputAdjacencyListString.append("] [ ]\n");
                 continue;
             }
             for (int j = 0; j < vertex.getNeighborsNumber(); j++) {
-                outputAdjacencyListString += vertex.vertexNeighbors.get(j).toString() + ", ";
+                outputAdjacencyListString.append(vertex.vertexNeighbors.get(j).toString()).append(", ");
             }
-            outputAdjacencyListString = outputAdjacencyListString.substring(0, outputAdjacencyListString.length() - 2);
-            outputAdjacencyListString += "] [ ";
+            outputAdjacencyListString = new StringBuilder(outputAdjacencyListString.substring(0, outputAdjacencyListString.length() - 2));
+            outputAdjacencyListString.append("] [ ");
             for (int j = 0; j < vertex.getNeighborsNumber(); j++) {
-                outputAdjacencyListString += vertex.neighborsDistance.get(j).toString() + ", ";
+                outputAdjacencyListString.append(vertex.neighborsDistance.get(j).toString()).append(", ");
             }
-            outputAdjacencyListString = outputAdjacencyListString.substring(0, outputAdjacencyListString.length() - 2);
-            outputAdjacencyListString += "]\n";
+            outputAdjacencyListString = new StringBuilder(outputAdjacencyListString.substring(0, outputAdjacencyListString.length() - 2));
+            outputAdjacencyListString.append("]\n");
         }
-        return outputAdjacencyListString;
+        return outputAdjacencyListString.toString();
 
     }
 
@@ -225,6 +230,7 @@ public class Graph {
 
     }
 
+    //возвращается степень вершины
     public int getVertexDegree (int vertex) {
 
         return adjacencyList.get(vertex).vertexNeighbors.size();

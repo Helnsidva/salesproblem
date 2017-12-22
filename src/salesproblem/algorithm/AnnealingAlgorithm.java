@@ -4,24 +4,28 @@ import java.util.*;
 
 import static java.lang.Math.*;
 
+//алгоритм имитации отжига
 public class AnnealingAlgorithm {
 
+    //возвращается коэффициент вероятность принятия решения
     static private double transitionProbability(int evaluation, double temprature) {
         return exp(-evaluation / temprature);
     }
 
+    // возвращается длина пути path
     static private int evaluatePath(List<Integer> path, Graph graph) {
 
         int result = 0;
         for (int i = 0; i < path.size() - 1; i++) {
-
+            /*если ребра между вершинами не существует, вместо него
+                    прибавляется условная "бесконечность"*/
             result += graph.getNotNullDistance(path.get(i), path.get(i + 1));
-
         }
         return result;
 
     }
 
+    //случайное генерирование нового пути
     static private List<Integer> generateNewPath(List<Integer> path, Graph graph) {
 
         int graphSize = graph.getGraphSize();
@@ -29,6 +33,9 @@ public class AnnealingAlgorithm {
 
         Random random = new Random();
         int i, j;
+
+        /*генерируем такие значения, чтобы при реверсии части пути,
+         между переставленными вершинами и их соседями были ребра*/
         do {
             do {
                 i = random.nextInt(graphSize - 1);
@@ -41,6 +48,8 @@ public class AnnealingAlgorithm {
         int first = min(i, j);
         int second = max(i, j);
 
+        /*переворачиваем часть пути в интервале от первого сгенерированного
+          числа до второго*/
         newPath.addAll(path.subList(0, first));
         List<Integer> reverseBuffer = path.subList(first, second);
         Collections.reverse(reverseBuffer);
@@ -59,9 +68,11 @@ public class AnnealingAlgorithm {
         if (graphSize == 0)
             return null;
 
+        //"температурный" коэффициент
         int startTemperature = graphSize * graphSize * 2;
         Random random = new Random();
 
+        //начальный путь - идущие от 0 по порядку вершины графа
         List<Integer> path = new ArrayList<>();
         for(int i = 0; i < graphSize; i++) {
             path.add(i);
@@ -74,10 +85,13 @@ public class AnnealingAlgorithm {
             int evaluation = evaluatePath(path, graph);
             int newEvaluation = evaluatePath(newPath, graph);
 
+            //если новый путь однозначно лучше - принимаем его
             if (newEvaluation < evaluation) {
                 path = newPath;
             }
 
+            /*если нет - считаем вероятность приния данного решения
+              если оно достигает нужного значения - принимаем*/
             else if (random.nextDouble() < transitionProbability(newEvaluation - evaluation,
                     (double) startTemperature / i)) {
                 path = newPath;
@@ -90,7 +104,7 @@ public class AnnealingAlgorithm {
         for (int i = 0; i < path.size() - 1; i++)
             pathMap.put(path.get(i), path.get(i + 1));
 
-
+        //в последний элемент Map записываем длину найденного пути
         pathMap.put(graphSize,evaluatePath(path, graph));
 
         return pathMap;

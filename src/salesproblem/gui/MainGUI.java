@@ -14,12 +14,15 @@ import javax.swing.*;
 public class MainGUI extends javax.swing.JFrame {
 
     private Graph graph;
+    /*
+    для обработки событий кнопок есть 7 "режимов":
+    1 - добавление вершины
+    2, 3 - добавление ребра
+    4 - удаление вершины
+    5, 6 - удаление ребра
+    7 - построение и вывод решения
+     */
     private int graphInputMode = 0;
-    //1 - adding vertex
-    //2, 3 - adding edge
-    //4 - removing vertex
-    //5, 6 - removing edge
-    //7 - finding way
 
     private MainGUI() {
         initComponents();
@@ -177,11 +180,13 @@ public class MainGUI extends javax.swing.JFrame {
     public class DrawPanel extends JPanel {
         private static final long serialVersionUID = 1L;
 
+        //список вершин и ребер хранится для перерисовки контейнера
         private ArrayList<Point> vertices;
         private ArrayList<ArrayList<Integer>> edges;
         private Map<Integer, Integer> salesmanPath;
         Integer deletingBuffer = null;
 
+        //получение индекса вершины по координатам
         private Integer getVertexIndex(int x, int y) {
 
             for (int i = 0; i < vertices.size(); i++) {
@@ -193,17 +198,21 @@ public class MainGUI extends javax.swing.JFrame {
 
         }
 
+        //добавление вершины по координатам
+        //добаление вершины к графу
         void addingVertex(MouseEvent e) {
             vertices.add(new Point(e.getX(), e.getY()));
             graph.addVertex();
-            renewalAdjList ();
+            renewalAdjList();
             graphInputMode = 0;
         }
 
+        //добавление первой вершины к списку ребер
         void addingSource(MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
             Integer vertexIndex = getVertexIndex(x, y);
+            //если вершины нет - ребро невозможно построить
             if (vertexIndex != null) {
                 ArrayList<Integer> addingEdge = new ArrayList<>();
                 addingEdge.add(vertexIndex);
@@ -215,10 +224,13 @@ public class MainGUI extends javax.swing.JFrame {
             }
         }
 
+        //добавление второй вершины и расстояние между ними к списку ребер
+        //добавление ребра к графу
         void addingTarget(MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
             Integer vertexIndex = getVertexIndex(x, y);
+            //если вершины нет - ребро невозможно построить
             if (vertexIndex != null) {
                 edges.get(edges.size() - 1).add(vertexIndex);
                 String inputWeight = JOptionPane.showInputDialog("Enter the weight of the edge");
@@ -231,6 +243,8 @@ public class MainGUI extends javax.swing.JFrame {
             graphInputMode = 0;
         }
 
+        //удаление вершины со сдвигом больших номеров вершин
+        //удаление вершины из графа
         void removingVertex(MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
@@ -264,6 +278,7 @@ public class MainGUI extends javax.swing.JFrame {
             graphInputMode = 0;
         }
 
+        //сохранение первой вершины удаляемого ребра
         void removingSource(MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
@@ -276,6 +291,8 @@ public class MainGUI extends javax.swing.JFrame {
                 graphInputMode = 0;
         }
 
+        //удаление ребра
+        //удаление ребра из графа
         void removingTarget(MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
@@ -295,6 +312,7 @@ public class MainGUI extends javax.swing.JFrame {
             graphInputMode = 0;
         }
 
+        //вывод списка смежности
         void renewalAdjList () {
             adjListWindowArea.setText(null);
             adjListWindowArea.append(graph.getAdjacencyListForPrint());
@@ -308,6 +326,7 @@ public class MainGUI extends javax.swing.JFrame {
             graph = new Graph();
 
             setBackground(Color.WHITE);
+            //обработки событий мыши
             addMouseListener(new MouseAdapter() {
                 @Override
                 public void mousePressed(MouseEvent e) {
@@ -333,6 +352,7 @@ public class MainGUI extends javax.swing.JFrame {
             });
         }
 
+        //вывод сообщений об ошибках
         void errorPrint() {
             solutionWindowArea.setText(null);
             solutionWindowArea.append("These is no solution!\n");
@@ -340,73 +360,69 @@ public class MainGUI extends javax.swing.JFrame {
             repaint();
         }
 
-        void checkGraph() {
+        //проверка графа на то, что он:
+        // не нулевой
+        // не пустой
+        // связный
+        // степень каждой вершины не меньше 2
+        // затем нахождение решения по алгоритму, соответствующего количеству вершин
+        boolean checkGraph() {
             if (graph == null) {
                 errorPrint();
-                return;
+                return false;
             }
             int graphSize = graph.getGraphSize();
             if (graphSize == 0) {
                 errorPrint();
-                return;
+                return false;
             }
             if (DepthSearch.depthSearch(graph) != graphSize) {
                 errorPrint();
-                return;
+                return false;
             }
             if (graph.getGraphSize() < 20)
-                salesmanPath = FindEulerianPath.findCycle(graph);
+                salesmanPath = FindHamiltonianPath.findCycle(graph);
             else
                 salesmanPath = AnnealingAlgorithm.findPath(graph);
             if (salesmanPath == null) {
                 errorPrint();
-                return;
+                return false;
             }
-
+            return true;
         }
 
-        @Override
-        public void paintComponent(Graphics g) {
-
-            super.paintComponent(g);
-            Graphics2D g2 = (Graphics2D) g;
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            g2.setColor(Color.black);
-            if (graphInputMode == 7) {
-                checkGraph();
-                if (salesmanPath == null) {
-                    errorPrint();
-                    return;
-                }
-                solutionWindowArea.setText(null);
-                solutionWindowArea.append("0 - ");
-                int nextVertex = 0;
-                for (int i = 0; i < salesmanPath.size() - 2; i++) {
-                    solutionWindowArea.append(salesmanPath.get(nextVertex).toString() + " - ");
-                    nextVertex = salesmanPath.get(nextVertex);
-                }
-                solutionWindowArea.append("0\n");
-                solutionWindowArea.append("Path length = " + salesmanPath.get(graph.getGraphSize()));
+        //вывод найденного маршрута и его длины на текстовую панель
+        boolean getSolution () {
+            if (!checkGraph()) {
+                errorPrint();
+                return false;
             }
-
-            for (Integer i = 0; i < vertices.size(); i++) {
-                Point vertex = vertices.get(i);
-                g2.fillOval(vertex.x, vertex.y, 10, 10);
-                g2.setFont(new Font("Times new roman", Font.BOLD, 20));
-                g2.setColor(Color.BLUE);
-                g2.drawString(i.toString(), vertex.x - 1, vertex.y);
-                g2.setFont(null);
-                g2.setColor(Color.black);
+            solutionWindowArea.setText(null);
+            solutionWindowArea.append("0 - ");
+            int nextVertex = 0;
+            for (int i = 0; i < salesmanPath.size() - 2; i++) {
+                solutionWindowArea.append(salesmanPath.get(nextVertex).toString() + " - ");
+                nextVertex = salesmanPath.get(nextVertex);
             }
+            solutionWindowArea.append("0\n");
+            solutionWindowArea.append("Path length = " + salesmanPath.get(graph.getGraphSize()));
+            return true;
+        }
+
+        //вывод ребер графа
+        void drawEdges (Graphics g2) {
             for (int i = 0; i < edges.size(); i++) {
                 ArrayList<Integer> edge = edges.get(i);
                 if (edge.size() == 3) {
+                    //получение координат вершин из списка вершин
                     int sourceX = vertices.get(edge.get(0)).x + 5;
                     int sourceY = vertices.get(edge.get(0)).y + 5;
                     int targetX = vertices.get(edge.get(1)).x + 5;
                     int targetY = vertices.get(edge.get(1)).y + 5;
                     Integer weight = edge.get(2);
+                    //если должны вывести решение задачи -
+                    //находим ребра, принадлежащие найденному пути
+                    //и рисуем их красным цветом
                     if (salesmanPath != null) {
                         int source = edge.get(0);
                         int target = edge.get(1);
@@ -427,6 +443,37 @@ public class MainGUI extends javax.swing.JFrame {
                     i--;
                 }
             }
+        }
+
+        //вывод вершин
+        void drawVertices (Graphics g2) {
+            for (Integer i = 0; i < vertices.size(); i++) {
+                Point vertex = vertices.get(i);
+                g2.fillOval(vertex.x, vertex.y, 10, 10);
+                g2.setFont(new Font("Times new roman", Font.BOLD, 20));
+                g2.setColor(Color.BLUE);
+                g2.drawString(i.toString(), vertex.x - 1, vertex.y);
+                g2.setFont(null);
+                g2.setColor(Color.black);
+            }
+        }
+
+        //метод вызывается при каждой перерисовке контейнера
+        @Override
+        public void paintComponent(Graphics g) {
+
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            g2.setColor(Color.black);
+            //если надо вывести решение, но его нет - return
+            if (graphInputMode == 7) {
+                if (!getSolution())
+                    return;
+            }
+            drawEdges(g2);
+            drawVertices(g2);
             salesmanPath = null;
         }
     }

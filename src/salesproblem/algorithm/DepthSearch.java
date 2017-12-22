@@ -5,6 +5,8 @@ import java.util.List;
 
 public class DepthSearch {
 
+    /*возвращается количество пройденных вершин при поиске в глубину.
+      используется для проверки графа на связность*/
     public static Integer depthSearch (Graph graph) {
 
         if (graph == null)
