@@ -7,10 +7,10 @@ import java.util.Map;
 
 public class Graph {
 
-    //класс для хранения соседей один вершины
+    //класс для хранения соседей одной вершины
     private class VertexList {
 
-        //хранится номер вершины, список соседних вершин
+        //хранится номер вершины, список соседних вершин,
         //список расстояний до соседей и количество соседей
         int vertexNumber;
         List<Integer> vertexNeighbors = new ArrayList<>();
