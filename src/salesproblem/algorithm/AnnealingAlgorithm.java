@@ -7,7 +7,7 @@ import static java.lang.Math.*;
 //алгоритм имитации отжига
 public class AnnealingAlgorithm {
 
-    //возвращается коэффициент вероятность принятия решения
+    //возвращается коэффициент вероятности принятия решения
     static private double transitionProbability(int evaluation, double temprature) {
         return exp(-evaluation / temprature);
     }
